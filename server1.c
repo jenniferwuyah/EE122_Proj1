@@ -21,10 +21,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-
-/* this header file contains headers for
- * helper functions. */
-#include "proj1_server.h"
+#include <fcntl.h>
 
 /* this defines the size of our buffer */
 #define MAX_NUM_CLIENTS 10
@@ -38,8 +35,8 @@ int main(int argc, char** argv)
 {
 	int ret, listen_fd, comm_fd;
 	unsigned short port;
-	unsigned int mode, packet_size
-	unsigned double packet_delay;
+	unsigned int mode, packet_size;
+	double packet_delay;
 	char *filename;
 	struct sockaddr_in servaddr;
 
@@ -55,10 +52,10 @@ int main(int argc, char** argv)
 		 * Print usage */
 		printf(" Usage:\n\n"
 			   "\t%s <mode>\n\n"
-		       "\t%s <port>\n\n"
-		       "\t%s <filename>\n\n"
-		       "\t%s <packet_size>\n\n"
-		       "\t%s <packet_delay>\n\n"
+		       "\t <port>\n\n"
+		       "\t <filename>\n\n"
+		       "\t <packet_size>\n\n"
+		       "\t <packet_delay>\n\n"
 		       " This server will do as the hw instruction.\n\n",argv[0]);
 		return 1; /* failure */
 	}

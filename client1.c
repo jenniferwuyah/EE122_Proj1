@@ -84,14 +84,14 @@ int main(int argc, char** argv)
 	}
 	printf("Connected: server's address is %s\n", server_address);
 
-	printf("Receive:\n");
-	bp = rbuf;
-	bytes_to_read = BUFLEN;
-	while ((n = read(sd, bp, bytes_to_read)) > 0) {
-	        bp += n;
-	        bytes_to_read -= n;
-	}
-	printf("%s\n", rbuf);
+	// printf("Receive:\n");
+	// bp = rbuf;
+	// bytes_to_read = BUFLEN;
+	// while ((n = read(sd, bp, bytes_to_read)) > 0) {
+	//         bp += n;
+	//         bytes_to_read -= n;
+	// }
+	// printf("%s\n", rbuf);
 	close(sd);
 	return(0);
 
