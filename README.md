@@ -1,6 +1,13 @@
 EE 122 Spring 2015 - Project 1
 ==================
 
+### Compilation Instruction
+
+* `make all` compile all files and output `server1` and `client1`
+* `make clean` cleans the `.o` files
+
+-----------------
+
 Total:  100 Points
 
 Due:  Friday, March 6, 2015
@@ -35,7 +42,7 @@ The server program is to transfer a specified file to any connecting clients. It
     
   ***Where***:
   
-    ￼￼<mode>
+    <mode>
         Either 0, 1, or 2. This value indicates what type of connection to establish with the server.
         0 : Connection-oriented sockets
         1 : Connectionless sockets
@@ -109,7 +116,7 @@ We now ask you to run a few experiments with your code. For each of the followin
 
 Use your code, as specified above, to compare the time needed to transmit each of your data files under the following conditions:
 
-	(a) Position both computers close to each other on campus (e.g. both computers connected to Wi-Fi in the same room).
+  (a) Position both computers close to each other on campus (e.g. both computers connected to Wi-Fi in the same room).
   
   (b) Position one of your computers on campus running the server program, and the other computer running the client program at a location off-campus (e.g. your apartment or an “open access point”).
   
@@ -141,30 +148,30 @@ The client program will receive these packets and generate a signal (such as a �
 
 The server program is to transfer a stream of packets to any clients until the client closes the socket. The server should be able to serve multiple clients in sequence without needing to be restarted.
 
-***Usage***: 
-		 ./proj1_server4 <port> 
+  ***Usage***: 
+	 ./proj1_server4 <port> 
 		 
-***Where***:
-		 <port> - The port on which to run the server.
+  ***Where***:
+	 <port> - The port on which to run the server.
 
 
 #### Client4 Program:
 
 The client program will connect to the specified server, receive all packets from the server, and produce a “blink” (or other signal) to the screen every time a packet is received. The client should run until the user sends a SIGINT (ctrl-c), at which point it should exit gracefully.
 
-***Usage***:
-		 ./proj1_client4 <address> <port> [ -b ]
+  ***Usage***:
+	 ./proj1_client4 <address> <port> [ -b ]
 
-***Where***:
+  ***Where***:
 		
-		 <address> - The IP address of the server to connect to. 
+	 <address> - The IP address of the server to connect to. 
 		 
-		 <port> - The port on which to connect to the server.
+	 <port> - The port on which to connect to the server.
 		 
-		 [ - b ] - An optional flag. If present, then the client will buffer the incoming packets, so that the “blinks” appear at a uniform rate of 5 seconds, regardless of whether the incoming packets are spaced more or less than 5 seconds apart.
+	 [ - b ] - An optional flag. If present, then the client will buffer the incoming packets, so that the “blinks” appear at a uniform rate of 5 seconds, regardless of whether the incoming packets are spaced more or less than 5 seconds apart.
 		 
 
-￼￼Both programs must be written in C/C++. All code must be submitted along with a README file that specifies:
+Both programs must be written in C/C++. All code must be submitted along with a README file that specifies:
 1. Names of group members
 2. Emails of group members
 3. Platform (e.g. Linux, Windows, Mac)
