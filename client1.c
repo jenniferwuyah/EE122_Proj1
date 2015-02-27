@@ -16,6 +16,7 @@
 #include <sys/socket.h>
 #include <netdb.h>
 #include <unistd.h>
+#include <arpa/inet.h>
 
 /* standard libraries */
 #include <stdlib.h>
@@ -44,12 +45,12 @@ int main(int argc, char** argv)
 		 *
 		 * Print usage */
 		printf(" Usage:\n\n"
-			   "\t%s <mode>\n\n"
-		       "\t%s <server_address>\n\n"
-		       "\t%s <port>\n\n"
-		       "\t%s <received_filename>\n\n"
-		       "\t%s <stats_filename>\n\n"
-		       " This client will do as the hw instruction.\n\n",argv[0]);
+			   "\t <mode>\n\n"
+		       "\t <server_address>\n\n"
+		       "\t <port>\n\n"
+		       "\t <received_filename>\n\n"
+		       "\t <stats_filename>\n\n"
+		       " This client will do as the hw instruction.\n\n");
 		return 1; /* failure */
 	}
 
