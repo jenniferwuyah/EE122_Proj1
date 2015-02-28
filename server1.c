@@ -33,12 +33,12 @@
  */
 int main(int argc, char** argv)
 {
-	int ret, listen_fd, comm_fd;
-	unsigned short port;
+	int ret, listen_fd, comm_fd, client_len,port, char_read;
+	//unsigned short port;
 	unsigned int mode, packet_size;
 	double packet_delay;
 	char *filename;
-	struct sockaddr_in servaddr;
+	struct sockaddr_in servaddr, client;
 
 	/* parse some args */
 	// ret = parse_args(&port, &mode, &packet_size, &packet_delay, filename, argc, argv);
@@ -85,7 +85,7 @@ int main(int argc, char** argv)
 	 *
 	 * This is like opening a file, and
 	 * gives you a file descriptor using IP addressing */
-	listen_fd = socket(AF_INET, SOCK_STREAM, 0);
+	listen_fd = socket(AF_INET, SOCK_STREAM,0);
 
 	/* prepare the structure that represents this socket*/
 
@@ -96,8 +96,8 @@ int main(int argc, char** argv)
 	 *
 	 * the call to 'htons' means converting numbers from
 	 * host format (little-endian) to network format (big-endian) */
-	servaddr.sin_addr.s_addr = htons(INADDR_ANY); 
-	
+	servaddr.sin_addr.s_addr = htons(INADDR_ANY);
+
 	/* listen on input port */
 	servaddr.sin_port = htons(port);
 
@@ -105,7 +105,11 @@ int main(int argc, char** argv)
 	 * that the file descriptor for this socket will
 	 * have the properties defined in this structure
 	 * (e.g. port number, address) */
-	bind(listen_fd, (struct sockaddr*) &servaddr, sizeof(servaddr));
+	if (bind(listen_fd, (struct sockaddr*) &servaddr, sizeof(servaddr))==-1) {
+      printf("Socket binding fails\n");
+      close(listen_fd);
+      exit(1);
+    }
 
 	/* once we call listen, then the port will be open to any
 	 * incoming connections.  The "backlog" indicates how many
@@ -114,11 +118,15 @@ int main(int argc, char** argv)
 	 * be dropped. */
 	listen(listen_fd, MAX_NUM_CLIENTS);
 	printf("[server]\tlistening on port: %d\n", port);
+    puts("hi world");
 
 	/*-------------------------*/
 	/* accept incoming clients */
 	/*-------------------------*/
+    printf("packet size %i", packet_size);
 	char buffer[packet_size];
+    printf("waiting for client");
+
 	/* infinite-loop */
 	while(1)
 	{
@@ -127,6 +135,10 @@ int main(int argc, char** argv)
 		 * This call will block, meaning that the
 		 * program won't continue until a client
 		 * connects. */
+        puts("waiting for client2?");
+
+        client_len = sizeof(client);
+        //comm_fd = accept(listen_fd, (struct sockaddr *)&client,(socklen_t *)&client_len);
 		comm_fd = accept(listen_fd, (struct sockaddr*) NULL, NULL);
 		printf("\n[server]\tGot a new client!\n");
 
@@ -139,8 +151,10 @@ int main(int argc, char** argv)
 			bzero(buffer, packet_size);
 			
 
+			char_read = read(file_handle, buffer, packet_size-1);
 			/* read the clients message */
-			if(0 == read(file_handle, buffer, packet_size))
+
+			if(char_read ==0 )
 			{
 				/* reading zero bytes means
 				 * the socket was closed by
@@ -148,12 +162,13 @@ int main(int argc, char** argv)
 				break;
 			}
 
+            buffer[packet_size-1] = '\0';
 			/* print it to screen */
-			printf(" - %s", buffer);
+			//printf(" - %s", buffer);
 
 			/* echo it back to client
 			 * (including null-terminator) */
-			write(comm_fd, buffer, strlen(buffer)+1);
+			write(comm_fd, buffer, strlen(buffer));
 
 			/* delay */
 			usleep(packet_delay * 1000000);

@@ -1,9 +1,9 @@
-objects = server1.o client1.o
+objects = server1 client1
 
 all: $(objects)
 
-$(objects): %.o: %.c
-	gcc -c -W -o $@ $<
+$(objects): %: %.c
+	gcc -o $@ $<
 
 clean: 
 	rm $(objects)
