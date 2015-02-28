@@ -22,6 +22,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/time.h>
 
 //#define BUFFER_SIZE 4096
 
@@ -35,9 +36,9 @@ int main(int argc, char** argv)
 	struct sockaddr_in servaddr;
     int buflen = 4096;
     int n, bytes_to_read;
-    char buf[buflen];
-
-
+    char buf[buflen], time_str[100];
+    struct timeval start, end;
+    float sec_delay;
 	/* parse some args */
 	if(argc != 6 || !strcmp(argv[1], "-h"))
 	{
@@ -83,6 +84,8 @@ int main(int argc, char** argv)
 	/* Connecting to the server */
     printf("Connected: server's address is %s\n", inet_ntoa(servaddr.sin_addr));
     puts("waiting for connection");
+
+    int first_pkt = 1;
 	
 	if (connect(sd, (struct sockaddr *)&servaddr, sizeof(servaddr)) != 1) {
     
@@ -91,13 +94,27 @@ int main(int argc, char** argv)
         printf("Receive:\n");
         bytes_to_read = buflen;
         FILE * fp;
+        FILE * stat_fp;
         fp = fopen (filename, "w");
+        stat_fp = fopen (stats_filename, "w");
         while ((n = read(sd, buf, bytes_to_read)) > 0) {
             //printf("bytes writing %i", (int) strlen(buf));
+            gettimeofday(&end, NULL);
+            if (first_pkt!=1) {
+                sec_delay = ((float)end.tv_usec - (float)start.tv_usec) / 1000000;
+                //printf("delay is %f", sec_delay);
+                sprintf(time_str, "%f\n",sec_delay);
+                printf("delay is %s", time_str);
+                fputs(time_str, stat_fp); //Write into file:
+                bzero(time_str, 100);
+            } else {
+                first_pkt = 0;
+            }
+            start=end;
             fputs(buf, fp); //Write into file:
             bzero(buf, buflen);
         }
-        
+        fclose(stat_fp);
         fclose(fp);
 
     }
