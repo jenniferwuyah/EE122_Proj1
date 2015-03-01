@@ -1,39 +1,20 @@
-
-/**
- * @file   proj1_client.c
- * @author Eric Turner <elturner@eecs.berkeley.edu>
- *
- * @section DESCRIPTION
- *
- * This file was written as an example program for
- *
- * 	EE 122: Introduction to Communication Networks
- * 	Spring 2015
- */
-
-/* needed for sockets */
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
 #include <unistd.h>
 #include <arpa/inet.h>
-
-/* standard libraries */
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/time.h>
 
-//#define BUFFER_SIZE 4096
-
 int main(int argc, char** argv)
 {
-	//char buffer[BUFFER_SIZE];
 	int sd, ret, listen_fd, comm_fdn, bytes_to_read, conless_send;
 	unsigned short port;
 	unsigned int mode;
 	char *filename, *stats_filename, *server_address;
-	struct sockaddr_in servaddr;
+	struct sockaddr_in servaddr, placeholder;
     int buflen = 4096;
     char buf[buflen], time_str[100];
     struct timeval start, end;
@@ -41,13 +22,11 @@ int main(int argc, char** argv)
 
     FILE * fp;
     FILE * stat_fp;
-	/* parse some args */
-	if(argc != 6 || !strcmp(argv[1], "-h"))
-	{
-		/* incorrect number of arguments given,
-		 * or help flag given.
-		 *
-		 * Print usage */
+
+    if(argc != 6 || !strcmp(argv[1], "-h"))
+    {
+        /* incorrect number of arguments given or help flag given.
+         * Print usage */
 		printf(" Usage:\n\n"
 			   "\t <mode>\n\n"
 		       "\t <server_address>\n\n"
@@ -58,7 +37,7 @@ int main(int argc, char** argv)
 		return 1; /* failure */
 	}
 
-	/* get the port */
+    /* Parse args */
 	port = atoi(argv[3]);
 	mode = atoi(argv[1]);
 	filename = argv[4];
@@ -71,7 +50,6 @@ int main(int argc, char** argv)
 		fprintf(stderr, "(Only accepts ports over 1000)\n");
 		return 1; /* failure */
 	}
-	//success
 
 	printf("Filename is: %s\n", filename);
 
@@ -91,9 +69,9 @@ int main(int argc, char** argv)
 
 	/* Connecting to the server */
     printf("Connected: server's address is %s\n", inet_ntoa(servaddr.sin_addr));
-    puts("waiting for connection");
+    puts("Waiting for connection");
 
-    int first_pkt = 1;
+    int first_pkt = 1; //For delay timing
 	
     if (mode==0) {
     	if (connect(sd, (struct sockaddr *)&servaddr, sizeof(servaddr)) == -1) {
@@ -105,12 +83,11 @@ int main(int argc, char** argv)
         printf("Connected: server's address is %s\n", inet_ntoa(servaddr.sin_addr));
         fp = fopen (filename, "w");
         stat_fp = fopen (stats_filename, "w");
+
         while (read(sd, buf, buflen) > 0) {
-            //printf("bytes writing %i", (int) strlen(buf));
             gettimeofday(&end, NULL);
             if (first_pkt!=1) {
-                sec_delay = ((float)end.tv_usec - (float)start.tv_usec) / 1000000;
-                //printf("delay is %f", sec_delay);
+                sec_delay = (float)(end.tv_sec - start.tv_sec) + ((float)end.tv_usec - (float)start.tv_usec)/1000000 ;
                 sprintf(time_str, "%f\n",sec_delay);
                 printf("delay is %s", time_str);
                 fputs(time_str, stat_fp); //Write into file:
@@ -118,9 +95,9 @@ int main(int argc, char** argv)
             } else {
                 first_pkt = 0;
             }
-            start=end;
             fputs(buf, fp); //Write into file:
             bzero(buf, buflen);
+            gettimeofday(&start, NULL);
         } 
     } else {
         char *temp = "Initial";
@@ -134,14 +111,12 @@ int main(int argc, char** argv)
         printf("Sent intial to server\n");
         fp = fopen (filename, "w");
         stat_fp = fopen (stats_filename, "w");
-        printf("actually waiting now\n");
+        printf("Actually waiting now\n");
+
         while (recvfrom(sd, buf, buflen, 0, NULL, NULL) > 0) {
-        //while (recvfrom(sd, buf, buflen, 0, (struct sockaddr *)&servaddr, (socklen_t *) &servaddr) > 0) {
-            printf("got something\n");
             gettimeofday(&end, NULL);
             if (first_pkt!=1) {
-                sec_delay = ((float)end.tv_usec - (float)start.tv_usec) / 1000000;
-                //printf("delay is %f", sec_delay);
+                sec_delay = (float)(end.tv_sec - start.tv_sec) + ((float)end.tv_usec - (float)start.tv_usec)/1000000 ;
                 sprintf(time_str, "%f\n",sec_delay);
                 printf("delay is %s", time_str);
                 fputs(time_str, stat_fp); //Write into file:
@@ -149,10 +124,10 @@ int main(int argc, char** argv)
             } else {
                 first_pkt = 0;
             }
-            start=end;
             fputs(buf, fp); //Write into file:
             bzero(buf, buflen);
-        }
+            gettimeofday(&start, NULL);
+        } 
 
     }
     fclose(stat_fp);
