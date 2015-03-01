@@ -29,16 +29,18 @@
 int main(int argc, char** argv)
 {
 	//char buffer[BUFFER_SIZE];
-	int sd, ret, listen_fd, comm_fd;
+	int sd, ret, listen_fd, comm_fdn, bytes_to_read, conless_send;
 	unsigned short port;
 	unsigned int mode;
 	char *filename, *stats_filename, *server_address;
 	struct sockaddr_in servaddr;
     int buflen = 4096;
-    int n, bytes_to_read;
     char buf[buflen], time_str[100];
     struct timeval start, end;
     float sec_delay;
+
+    FILE * fp;
+    FILE * stat_fp;
 	/* parse some args */
 	if(argc != 6 || !strcmp(argv[1], "-h"))
 	{
@@ -73,10 +75,16 @@ int main(int argc, char** argv)
 
 	printf("Filename is: %s\n", filename);
 
-	if ((sd = socket(AF_INET, SOCK_STREAM,0)) == -1) {
+    if (mode ==0) {
+        sd = socket(AF_INET, SOCK_STREAM,0);
+    } else {
+        sd = socket(AF_INET, SOCK_DGRAM,0);
+    }
+	if (sd == -1) {
 	    fprintf(stderr, "Can't create a socket\n");
 		exit(1); 
 	}
+
 	inet_pton(AF_INET, server_address, &(servaddr.sin_addr));
 	servaddr.sin_port = htons(port);
     servaddr.sin_family = AF_INET;
@@ -87,17 +95,17 @@ int main(int argc, char** argv)
 
     int first_pkt = 1;
 	
-	if (connect(sd, (struct sockaddr *)&servaddr, sizeof(servaddr)) != 1) {
-    
+    if (mode==0) {
+    	if (connect(sd, (struct sockaddr *)&servaddr, sizeof(servaddr)) == -1) {
+            printf("Couldn't connect to server");
+            close(sd);
+            exit(1);
+        }
+        
         printf("Connected: server's address is %s\n", inet_ntoa(servaddr.sin_addr));
-
-        printf("Receive:\n");
-        bytes_to_read = buflen;
-        FILE * fp;
-        FILE * stat_fp;
         fp = fopen (filename, "w");
         stat_fp = fopen (stats_filename, "w");
-        while ((n = read(sd, buf, bytes_to_read)) > 0) {
+        while (read(sd, buf, buflen) > 0) {
             //printf("bytes writing %i", (int) strlen(buf));
             gettimeofday(&end, NULL);
             if (first_pkt!=1) {
@@ -113,11 +121,42 @@ int main(int argc, char** argv)
             start=end;
             fputs(buf, fp); //Write into file:
             bzero(buf, buflen);
+        } 
+    } else {
+        char *temp = "Initial";
+        //Talk to server to begin. 
+        if (sendto(sd, temp, strlen(temp) , 0, (struct sockaddr *) &servaddr, sizeof(servaddr)) == -1) {
+            printf("Couldn't send to the server");
+            close(sd);
+            exit(1);
         }
-        fclose(stat_fp);
-        fclose(fp);
+
+        printf("Sent intial to server\n");
+        fp = fopen (filename, "w");
+        stat_fp = fopen (stats_filename, "w");
+        printf("actually waiting now\n");
+        while (recvfrom(sd, buf, buflen, 0, NULL, NULL) > 0) {
+        //while (recvfrom(sd, buf, buflen, 0, (struct sockaddr *)&servaddr, (socklen_t *) &servaddr) > 0) {
+            printf("got something\n");
+            gettimeofday(&end, NULL);
+            if (first_pkt!=1) {
+                sec_delay = ((float)end.tv_usec - (float)start.tv_usec) / 1000000;
+                //printf("delay is %f", sec_delay);
+                sprintf(time_str, "%f\n",sec_delay);
+                printf("delay is %s", time_str);
+                fputs(time_str, stat_fp); //Write into file:
+                bzero(time_str, 100);
+            } else {
+                first_pkt = 0;
+            }
+            start=end;
+            fputs(buf, fp); //Write into file:
+            bzero(buf, buflen);
+        }
 
     }
+    fclose(stat_fp);
+    fclose(fp);
     close(sd);
 	return 0;
 
