@@ -149,9 +149,11 @@ The client program will receive these packets and generate a signal (such as a �
 The server program is to transfer a stream of packets to any clients until the client closes the socket. The server should be able to serve multiple clients in sequence without needing to be restarted.
 
   ***Usage***: 
+	 
 	 ./proj1_server4 <port> 
 		 
   ***Where***:
+	
 	 <port> - The port on which to run the server.
 
 
@@ -160,6 +162,7 @@ The server program is to transfer a stream of packets to any clients until the c
 The client program will connect to the specified server, receive all packets from the server, and produce a “blink” (or other signal) to the screen every time a packet is received. The client should run until the user sends a SIGINT (ctrl-c), at which point it should exit gracefully.
 
   ***Usage***:
+	
 	 ./proj1_client4 <address> <port> [ -b ]
 
   ***Where***:
