@@ -162,7 +162,9 @@
 				sendto(listen_fd, buffer, bytes_to_send, 0, (struct sockaddr *) &client, client_len);
 			} 
 			/* delay */
-			usleep(packet_delay * 1000000);
+			if (packet_delay != 0) {
+				usleep(packet_delay * 1000000);
+			}
 		}
 
 		/*Send last empty packet for connectless to finish*/
