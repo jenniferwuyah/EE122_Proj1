@@ -21,6 +21,7 @@
  	struct sockaddr_in servaddr, client;
  	struct sockaddr client_test;
  	char buf[7]; //used for connectless recv to establish connection
+ 	int bytes_to_send;
 
  	if(argc != 6 || !strcmp(argv[1], "-h"))
  	{
@@ -81,6 +82,15 @@
 	} 
 
 	char buffer[packet_size]; //For sending packets
+
+
+	char str_buf[20];
+	sprintf(str_buf, "%i", packet_size);
+	for (int c =strlen(str_buf); c < 18; c+=1 ) {
+		str_buf[c] = ' '; 
+	}
+	str_buf[19]= '\0';
+
 	while(1)
 	{
 
@@ -99,26 +109,63 @@
 		printf("\n[server]\tGot a new client!\n");
 
 		int file_handle = open(filename, O_RDONLY, S_IREAD);
-		char *temp = "Initial";
+
+
+		// str_buf[strlen(str_buf)] = '\0';
+		// printf("buf length is %lu\n", strlen(str_buf));
+
+		//Say the packet size
+		if (mode==0) {	
+			write(comm_fd, str_buf, strlen(str_buf));
+			if (read(comm_fd, buf, 7) ==-1)
+			{
+				printf("ERROR GETTING ACK");
+			}
+		} else {
+			sendto(listen_fd, str_buf, strlen(str_buf), 0, (struct sockaddr *) &client, client_len);
+			if (recvfrom(listen_fd, buf, 8 , 0,NULL, NULL) == -1)
+			{
+				printf("ERROR GETTING ACK");
+
+			}
+
+		} 
+
+		usleep(1);
 
 		while(1)
 		{
 			bzero(buffer, packet_size);
 
 			/* Read packet_size bytes from the file*/
-		 	char_read = read(file_handle, buffer, packet_size-1);
+		 	// char_read = read(file_handle, buffer, packet_size-1);
+
+		 	char_read = read(file_handle, buffer, packet_size);
 
 		 	if(char_read ==0)
 		 	{
 				break; //Finish reading the file
 			}
 			/*(including null-terminator) */
-			buffer[packet_size-1] = '\0';
-
-			if (mode==0) {
-				write(comm_fd, buffer, strlen(buffer));
+			// buffer[packet_size-1] = '\0';
+			//Last packet should end in null character so easier for writing later.
+			
+			if (char_read!=packet_size) {
+				buffer[char_read] = '\0';
+				bytes_to_send = char_read +1;
 			} else {
-				sendto(listen_fd, buffer, strlen(buffer), 0, (struct sockaddr *) &client, client_len);
+				bytes_to_send = char_read;
+			}
+
+
+			if (mode==0) {				
+				// printf("%lu\n", strlen(buffer));
+				write(comm_fd, buffer, bytes_to_send);
+
+				// write(comm_fd, buffer, strlen(buffer));
+			} else {
+				// printf("%s\n", buffer);
+				sendto(listen_fd, buffer, bytes_to_send, 0, (struct sockaddr *) &client, client_len);
 			} 
 			/* delay */
 			usleep(packet_delay * 1000000);
@@ -132,6 +179,7 @@
 			/* close the connection */
 			close(comm_fd);
 		}
+		close(file_handle);
 		printf("[server]\tClient left.\n");
 	}
 	return 0;
