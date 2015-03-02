@@ -15,10 +15,8 @@ int main(int argc, char** argv)
 	unsigned int mode;
 	char *filename, *stats_filename, *server_address;
 	struct sockaddr_in servaddr, placeholder;
-    // int buflen = 4096;
-    // char buf[buflen];
     char time_str[100];
-    struct timeval start, end;
+    struct timeval start, end, conn_start, conn_end;
     float sec_delay;
     char str_buf[20]; //Assume largest packet is only 20 digits
     int packet_size;
@@ -50,14 +48,14 @@ int main(int argc, char** argv)
 	stats_filename = argv[5];
 	server_address = argv[2];
 
-	if(port < 1000)
+	if(port < 1024)
 	{
 		fprintf(stderr, "Invalid port number: %d\n", port);
 		fprintf(stderr, "(Only accepts ports over 1000)\n");
 		return 1; /* failure */
 	}
 
-	printf("Filename is: %s\n", filename);
+	// printf("Filename is: %s\n", filename);
 
     if (mode ==0) {
         sd = socket(AF_INET, SOCK_STREAM,0);
@@ -74,8 +72,6 @@ int main(int argc, char** argv)
     servaddr.sin_family = AF_INET;
 
 	/* Connecting to the server */
-    printf("Connected: server's address is %s\n", inet_ntoa(servaddr.sin_addr));
-    puts("Waiting for connection");
 
     int first_pkt = 1; //For delay timing
 	int count =0;
@@ -87,19 +83,18 @@ int main(int argc, char** argv)
             close(sd);
             exit(1);
         }
+
+        gettimeofday(&conn_start, NULL);
         
-        printf("Connected: server's address is %s\n", inet_ntoa(servaddr.sin_addr));
+        // printf("Connected: server's address is %s\n", inet_ntoa(servaddr.sin_addr));
         fp = fopen (filename, "w");
         stat_fp = fopen (stats_filename, "w");
 
-    
-
         //getting packet size first
         if (read(sd, str_buf, 20) > 0) {
-            printf("client got %s\n", str_buf);
+            // printf("client got %s\n", str_buf);
             packet_size = atoi(str_buf);
-            // bzero(buf, buflen);
-            printf("packet size is %i\n", packet_size);
+            // printf("packet size is %i\n", packet_size);
         }
 
         //ACK packet size. 
@@ -114,51 +109,37 @@ int main(int argc, char** argv)
         buflen = packet_size;
 
         while (recv(sd, buf, packet_size,0) > 0) {
-        // while (read(sd, buf, packet_size) > 0) {
             gettimeofday(&end, NULL);
             if (first_pkt!=1) {
                 sec_delay = (float)(end.tv_sec - start.tv_sec) + ((float)end.tv_usec - (float)start.tv_usec)/1000000 ;
                 sprintf(time_str, "%f\n",sec_delay);
-                // printf("delay is %s", time_str);
                 fputs(time_str, stat_fp); //Write into file:
                 bzero(time_str, 100);
-                count+=1;
             } else {
                 first_pkt = 0;
             }
-            // n = fwrite(buf, 1, packet_size, fp);
-            // printf("buffer length is %lu\n", strlen(buf));
             buf[packet_size] = '\0';
             n = fputs(buf, fp); //Write into file:
-            
-            // printf("just wrote %i\n", n);
-
+            count+=n;
             bzero(buf, buflen);
             gettimeofday(&start, NULL);
         } 
     } else {
         //Talk to server to begin. 
+        gettimeofday(&conn_start, NULL);
+
         if (sendto(sd, temp, strlen(temp) , 0, (struct sockaddr *) &servaddr, sizeof(servaddr)) == -1) {
             printf("Couldn't send to the server");
             close(sd);
             exit(1);
         }
 
-        printf("Sent intial to server\n");
         fp = fopen (filename, "w");
         stat_fp = fopen (stats_filename, "w");
-        printf("Actually waiting now\n");
-
-        //char buf[5];
-        // int buflen = 6;
-
-
 
         //getting packet size first
         if (recvfrom(sd, str_buf, 20, 0, NULL, NULL) > 0) {
-            printf("client got %s\n", str_buf);
             packet_size = atoi(str_buf);
-            printf("packet size is %i\n", packet_size);
         }
 
         //ACK packet size. 
@@ -168,35 +149,33 @@ int main(int argc, char** argv)
             exit(1);
         }
 
-
         char buf[packet_size];
         buflen = packet_size;
-
-
 
         while (recvfrom(sd, buf, packet_size, 0, NULL, NULL) > 0) {
             gettimeofday(&end, NULL);
             if (first_pkt!=1) {
                 sec_delay = (float)(end.tv_sec - start.tv_sec) + ((float)end.tv_usec - (float)start.tv_usec)/1000000 ;
                 sprintf(time_str, "%f\n",sec_delay);
-                printf("delay is %s", time_str);
                 fputs(time_str, stat_fp); //Write into file:
                 bzero(time_str, 100);
-                count+=1;
             } else {
                 first_pkt = 0;
             }
             buf[packet_size] = '\0';
-            fputs(buf, fp); //Write into file:
+            n = fputs(buf, fp); //Write into file:
+            count+=n;
             bzero(buf, buflen);
             gettimeofday(&start, NULL);
         } 
 
     }
-    printf("count is %i\n", count);
+    gettimeofday(&conn_end, NULL);
+    sec_delay = (float)(conn_end.tv_sec - conn_start.tv_sec) + ((float)conn_end.tv_usec - (float)conn_start.tv_usec)/1000000 ;
+    fprintf(stderr, "[client]\t Connection lasted %f seconds\n", sec_delay);
+    fprintf(stderr, "[client]\t Received a file of size %i bytes\n",count );
     fclose(stat_fp);
     fclose(fp);
     close(sd);
 	return 0;
-
 }

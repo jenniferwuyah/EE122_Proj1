@@ -50,8 +50,8 @@
 	return 1; /* failure */
 	}
 
-	printf("Filename is: %s\n", filename);
-	printf("packet size %i\n", packet_size);
+	// printf("Filename is: %s\n", filename);
+	// printf("packet size %i\n", packet_size);
 
 	/*Server set up*/
 	if (mode==0) {
@@ -132,7 +132,6 @@
 		} 
 
 		usleep(1);
-
 		while(1)
 		{
 			bzero(buffer, packet_size);
@@ -146,10 +145,9 @@
 		 	{
 				break; //Finish reading the file
 			}
-			/*(including null-terminator) */
-			// buffer[packet_size-1] = '\0';
 			//Last packet should end in null character so easier for writing later.
 			
+			/*If not packet size then include null terminator to know when to stop*/
 			if (char_read!=packet_size) {
 				buffer[char_read] = '\0';
 				bytes_to_send = char_read +1;
@@ -159,12 +157,8 @@
 
 
 			if (mode==0) {				
-				// printf("%lu\n", strlen(buffer));
 				write(comm_fd, buffer, bytes_to_send);
-
-				// write(comm_fd, buffer, strlen(buffer));
 			} else {
-				// printf("%s\n", buffer);
 				sendto(listen_fd, buffer, bytes_to_send, 0, (struct sockaddr *) &client, client_len);
 			} 
 			/* delay */
