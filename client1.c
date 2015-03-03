@@ -59,9 +59,12 @@ int main(int argc, char** argv)
 
     if (mode ==0) {
         sd = socket(AF_INET, SOCK_STREAM,0);
-    } else {
+    } else if (mode==1) {
         sd = socket(AF_INET, SOCK_DGRAM,0);
+    } else {
+        sd = socket(AF_INET, SOCK_DGRAM, 0);
     }
+
 	if (sd == -1) {
 	    fprintf(stderr, "Can't create a socket\n");
 		exit(1); 
