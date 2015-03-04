@@ -3,7 +3,7 @@ EE 122 Spring 2015 - Project 1
 
 ### Compilation Instruction
 
-* `make all` compile all files and output `server1` and `client1`
+* `make all` compile all files and output `proj1_server` and `proj1_client`
 * `make clean` cleans the `.o` files
 
 -----------------
