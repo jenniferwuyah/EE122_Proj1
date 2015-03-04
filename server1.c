@@ -7,40 +7,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <fcntl.h>
-#include <netinet/udp.h>   //Provides declarations for udp header
+#include <sys/stat.h>
 
 /* this defines the size of our buffer */
 #define MAX_NUM_CLIENTS 10
-
-// total udp header length: 8 bytes (=64 bits)
- 
-// Function for checksum calculation. From the RFC,
-// the checksum algorithm is:
-//  "The checksum field is the 16 bit one's complement of the one's
-//  complement sum of all 16 bit words in the header.  For purposes of
-//  computing the checksum, the value of the checksum field is zero."
-	unsigned short csum(unsigned short *buf, int nwords)
-	{       //
-	        unsigned long sum;
-	        for(sum=0; nwords>0; nwords--)
-	            sum += *buf++;
-	        sum = (sum >> 16) + (sum &0xffff);
-	        sum += (sum >> 16);
-	        return (unsigned short)(~sum);
-	}
-
-struct iphdr {
- unsigned int      ihl:5, version:4;
-    u_int8_t tos;
-    u_int16_t tot_len;
-    u_int16_t id;
-    u_int16_t frag_off;
-    u_int8_t ttl;
-    u_int8_t protocol;
-    u_int16_t check;
-    u_int32_t saddr;
-    u_int32_t daddr;
-};	
 
  int main(int argc, char** argv)
  {
@@ -52,8 +22,7 @@ struct iphdr {
  	struct sockaddr_in servaddr, client;
  	struct sockaddr client_test;
  	char buf[7]; //used for connectless recv to establish connection
-
- 	
+ 	int bytes_to_send;
 
  	if(argc != 6 || !strcmp(argv[1], "-h"))
  	{
@@ -88,10 +57,16 @@ struct iphdr {
 	/*Server set up*/
 	if (mode==0) {
 	 	listen_fd = socket(AF_INET, SOCK_STREAM,0);
-	} else if (mode==1) { //connectionless sockets
+	} else if (mode == 1 ){ //connectionless sockets
 	 	listen_fd = socket(AF_INET, SOCK_DGRAM,0);
 	} else {
-		listen_fd = socket(AF_INET, SOCK_RAW, IPPROTO_RAW);
+	 	listen_fd = socket(AF_INET, SOCK_DGRAM,IPPROTO_UDPLITE);
+	}
+
+	if (mode==2) {
+		int optval=1;
+		setsockopt(listen_fd, SOL_SOCKET, SO_NO_CHECK , (void*)&optval, sizeof(optval));
+		// setsockopt(listen_fd, SOL_SOCKET, SO_UDPCKSUM_IN);
 	}
 
 	if (listen_fd ==- 1) {
@@ -104,45 +79,6 @@ struct iphdr {
 	servaddr.sin_addr.s_addr = htons(INADDR_ANY);
 	servaddr.sin_port = htons(port);
 
-	char buffer[packet_size]; //For sending packets
- 	int bytes_to_send;
-
-	struct iphdr *iph= (struct iphdr *) buffer;
-	struct udphdr *udph = (struct udphdr *) (buffer + sizeof(struct iphdr));
-
-	if (mode == 2) {
-	
-		//Fill in the IP Header
-	    iph->ihl = 5;
-	    iph->version = 4;
-	    iph->tos = 0;
-	    iph->tot_len = sizeof (struct iphdr) + sizeof (struct udphdr);
-	    iph->id = htonl (54321); //Id of this packet
-	    iph->frag_off = 0;
-	    iph->ttl = 255;
-	    iph->protocol = IPPROTO_UDP;
-	    iph->check = 0;      //Set to 0 before calculating checksum
-	    iph->saddr = servaddr.sin_addr.s_addr;
-	    iph->daddr = client.sin_addr.s_addr;
-
-	    //UDP header
-	    udph->uh_sport = htons (port);
-	    udph->uh_dport = client.sin_port;
-	    udph->uh_ulen = htons(8 + bytes_to_send); //udp header size
-	    udph->uh_sum = 0; //leave checksum 0 now
-
-		iph->check = csum((unsigned short *)buffer, sizeof(struct iphdr) + sizeof(struct udphdr));
-		// Inform the kernel do not fill up the packet structure. we will build our own...
-		int one = 1;
-		if(setsockopt(listen_fd, IPPROTO_IP, IP_HDRINCL, &one, sizeof(one)) < 0)
-		{
-		perror("setsockopt() error");
-		exit(-1);
-		}
-		else
-		printf("setsockopt() is OK.\n");
-	}
-
 	if (bind(listen_fd, (struct sockaddr*) &servaddr, sizeof(servaddr))==-1) {
 	 	printf("Socket binding fails\n");
 	 	close(listen_fd);
@@ -154,22 +90,18 @@ struct iphdr {
 		printf("[server]\tlistening on port: %d\n", port);
 	} 
 
+	char buffer[packet_size]; //For sending packets
 
-	char str_buf[20];
-	sprintf(str_buf, "%i", packet_size);
-	for (int c =strlen(str_buf); c < 18; c+=1 ) {
-		str_buf[c] = ' '; 
-	}
-	str_buf[19]= '\0';
+	printf("[server]\tWaiting for clients at port: %d\n", port);
 
 
 	while(1)
 	{
-
-
 		if (mode == 0) {
 		 	comm_fd = accept(listen_fd, (struct sockaddr*) NULL, NULL);
-		} else {		 	
+		} else {
+			memset(&client, 0, sizeof(struct sockaddr_in));
+			client_len = sizeof(client);
 		 	comm_fd = recvfrom(listen_fd, buf, 8 , 0,(struct sockaddr *) &client, (socklen_t *)&client_len); 
 		 	client.sin_family = AF_INET;
 		}
@@ -180,20 +112,27 @@ struct iphdr {
 
 		printf("\n[server]\tGot a new client!\n");
 
-		int file_handle = open(filename, O_RDONLY, S_IREAD);
-
+		int file_handle = open(filename, O_RDONLY, S_IRUSR);
+		printf("%d\n", client.sin_port);
+		printf("client size? %d", sizeof(client));
 
 		// str_buf[strlen(str_buf)] = '\0';
 		// printf("buf length is %lu\n", strlen(str_buf));
 
-		//Say the packet size
+		//Say the packet size for connection oriented
 		if (mode==0) {	
+			char str_buf[20];
+			sprintf(str_buf, "%i", packet_size);
+			int c;
+			for (c =strlen(str_buf); c < 18; c+=1 ) {
+				str_buf[c] = ' '; 
+			}
+			str_buf[19]= '\0';
 			write(comm_fd, str_buf, strlen(str_buf));
-			if (read(comm_fd, buf, 7) ==-1)
-			{
+			if (read(comm_fd, buf, 7) ==-1) {
 				printf("ERROR GETTING ACK");
 			}
-		} else {
+		} /*else {
 			sendto(listen_fd, str_buf, strlen(str_buf), 0, (struct sockaddr *) &client, client_len);
 			if (recvfrom(listen_fd, buf, 8 , 0,NULL, NULL) == -1)
 			{
@@ -201,11 +140,9 @@ struct iphdr {
 
 			}
 
-		} 
+		}*/ 
 
-		usleep(1);
-		while(1)
-		{
+		while(1) {
 			bzero(buffer, packet_size);
 
 			/* Read packet_size bytes from the file*/
@@ -226,17 +163,24 @@ struct iphdr {
 			} else {
 				bytes_to_send = char_read;
 			}
-
-
-
+			puts(buffer);
+			puts("*****************************************");
 
 			if (mode==0) {				
 				write(comm_fd, buffer, bytes_to_send);
 			} else {
-				sendto(listen_fd, buffer, bytes_to_send, 0, (struct sockaddr *) &client, client_len);
-			} 
+				int send_suc;
+				send_suc = sendto(listen_fd, buffer, bytes_to_send, 0, (struct sockaddr *) &client, client_len);
+				//puts("just sent yes");				
+//printf("just sent %i\n", send_suc);
+				if (send_suc < 0) {
+					printf("\n!!!!!!!!!!!!!!!!!!! NO BUENO!!!!!!!!!!!!!!!!!!!!!!\n");
+					perror("sendto");
+				}
+			}
+ 
 			/* delay */
-			if (packet_delay != 0) {
+			if (packet_delay>0) {			
 				usleep(packet_delay * 1000000);
 			}
 		}
