@@ -146,8 +146,11 @@
 			if (mode==0) {				
 				write(comm_fd, buffer, bytes_to_send);
 			} else {
-				if (sendto(listen_fd, buffer, bytes_to_send, 0, (struct sockaddr *) &client, client_len) != bytes_to_send) {
-					printf("[server]\tError: %s.\n", perror('sendto'));
+				int send_suc;
+				send_suc = sendto(listen_fd, buffer, bytes_to_send, 0, (struct sockaddr *) &client, client_len);
+				if (send_suc < 0) {
+					printf("[server]\tError: Failed sending packet.\n");
+					perror("sendto");
 				}
 			}
  
