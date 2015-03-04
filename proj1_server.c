@@ -68,6 +68,7 @@
 	}
 
 	/*Prepare server socket*/
+	bzero((char *)&server, sizeof(server));
 	server.sin_family = AF_INET;
 	server.sin_addr.s_addr = htons(INADDR_ANY);
 	server.sin_port = htons(port);
@@ -87,6 +88,7 @@
 
 	printf("[server]\tWaiting for clients at port <%d>.\n", port);
 
+	int packetno = 1;
 
 	while(1)
 	{
@@ -124,7 +126,6 @@
 
 		while(1) {
 			bzero(buffer, packet_size);
-
 			/* Read packet_size bytes from the file*/
 
 		 	char_read = read(file_handle, buffer, packet_size);
@@ -146,18 +147,20 @@
 			if (mode==0) {				
 				write(comm_fd, buffer, bytes_to_send);
 			} else {
-				int send_suc;
-				send_suc = sendto(listen_fd, buffer, bytes_to_send, 0, (struct sockaddr *) &client, client_len);
-				if (send_suc < 0) {
+				if (sendto(listen_fd, buffer, bytes_to_send, 0, (struct sockaddr *) &client, client_len) != bytes_to_send) {
 					printf("[server]\tError: Failed sending packet.\n");
 					perror("sendto");
 				}
 			}
  
 			/* delay */
-			if (packet_delay>0) {
-				usleep(packet_delay * 1000000);
+			if (packet_delay == 0) {
+				packet_delay= 0.000001; 
 			}
+			//if (packet_delay>0) {
+				usleep(packet_delay * 1000000);
+			//}
+			packetno++;
 		}
 
 		/*Send last empty packet for connectless to finish*/

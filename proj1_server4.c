@@ -85,9 +85,7 @@
 			//set packet delay to random double between 1 and 10
 			packet_delay = (rand() / (double)(RAND_MAX/10)) ;
 
-			int send_suc;
-			send_suc = sendto(listen_fd, buffer, PACKET_SIZE, 0, (struct sockaddr *) &client, client_len);
-			if (send_suc < 0) {
+			if (sendto(listen_fd, buffer, PACKET_SIZE, 0, (struct sockaddr *) &client, client_len) < 0) {
 				printf("[server]\tError: Failed sending packet.\n");
 				perror("sendto");
 			}

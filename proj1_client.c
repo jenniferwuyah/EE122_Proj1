@@ -8,6 +8,8 @@
 #include <string.h>
 #include <sys/time.h>
 
+#define MAXLEN 4096
+
 int main(int argc, char** argv)
 {
     int sd, buflen;
@@ -47,8 +49,8 @@ int main(int argc, char** argv)
     server_address = argv[2];
 
     if(port < 1024) {
-        fprintf(stderr, "Invalid port number: %d\n", port);
-        fprintf(stderr, "(Only accepts ports over 1000)\n");
+        fprintf(stderr, "[client4]\tError: Invalid port number <%d>.\n", port);
+        fprintf(stderr, "\t\t(Only accepts ports over 1000)\n");
         return 1; /* failure */
     }
 
@@ -62,10 +64,11 @@ int main(int argc, char** argv)
         sd = socket(AF_INET, SOCK_DGRAM,IPPROTO_UDPLITE);
     }
     if (sd == -1) {
-        fprintf(stderr, "Can't create a socket\n");
+        fprintf(stderr, "[client4]\tError: Can't create a socket.\n");
         exit(1); 
     }
 
+    bzero((char *)&server, sizeof(server));
     inet_pton(AF_INET, server_address, &(server.sin_addr));
     server.sin_port = htons(port);
     server.sin_family = AF_INET;
@@ -128,7 +131,7 @@ int main(int argc, char** argv)
     
         puts("sending to server");
         if (sendto(sd, temp, strlen(temp) , 0, (struct sockaddr *) &server, sizeof(server)) == -1) {
-            puts("Couldn't send to the server");
+            fprintf(stderr, "[client4]\tError: Couldn't send to the server.");
             close(sd);
             exit(1);
         }
@@ -136,26 +139,26 @@ int main(int argc, char** argv)
         fp = fopen (filename, "w");
         stat_fp = fopen (stats_filename, "w");
 
-        char buf[4096];
-        buflen = 4096;
+        char buf[MAXLEN];
+        buflen = MAXLEN;
         int char_rec;
         puts("character being recv");
-
+        int packetno = 1;
         while ((char_rec = recvfrom(sd, buf, buflen, 0, NULL, NULL)) > 0) {
-        //puts("Got stuff from server");
             gettimeofday(&end, NULL);
             if (first_pkt!=1) {
-                sec_delay = (float)(end.tv_sec - start.tv_sec) + ((float)end.tv_usec - (float)start.tv_usec)/1000000 ;
-                sprintf(time_str, "%f\n",sec_delay);
-                fputs(time_str, stat_fp); //Write into stat file:
+                sec_delay = (float)(end.tv_sec - start.tv_sec) + ((float)end.tv_usec - (float)start.tv_usec)/1000000;
+                sprintf(time_str, "%f",sec_delay);
+                fputs(time_str, stat_fp); //Write into stat file
                 bzero(time_str, 100);
             } else {
                 first_pkt = 0;
-            } 
+            }
             count+=char_rec;
-            fwrite(buf, 1, char_rec, fp);   //Write into file
+            fwrite(buf, 1, char_rec, fp);
             bzero(buf, buflen);
             gettimeofday(&start, NULL);
+            packetno++;
         } 
         
 

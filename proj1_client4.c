@@ -81,8 +81,6 @@ int main(int argc, char** argv)
         if (first_pkt!=1) {
             sec_delay = (float)(end.tv_sec - start.tv_sec) + ((float)end.tv_usec - (float)start.tv_usec)/1000000 ;
             printf("%f\n",sec_delay);
-
-            bzero(time_str, 100);
         } else {
             first_pkt = 0;
         }
@@ -99,7 +97,7 @@ int main(int argc, char** argv)
     sec_delay = (float)(conn_end.tv_sec - conn_start.tv_sec) + ((float)conn_end.tv_usec - (float)conn_start.tv_usec)/1000000 ;
     fprintf(stderr, "[client4]\t Connection lasted %f seconds.\n", sec_delay);
     fprintf(stderr, "[client4]\t Received a file of size %i bytes.\n",count );
-\
+
     close(sd);
     return 0;
 }
