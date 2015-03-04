@@ -156,7 +156,7 @@
  
 			/* delay */
 			if (packet_delay>0) {
-				usleep(packet_delay * 1000000);
+				usleep((int)(packet_delay * 1000000));
 			}
 		}
 
