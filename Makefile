@@ -1,4 +1,4 @@
-objects = server1 client1
+objects = proj1_server proj1_client proj1_server4 proj1_client4
 
 all: $(objects)
 

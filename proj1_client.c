@@ -31,12 +31,12 @@ int main(int argc, char** argv)
         /* incorrect number of arguments given or help flag given.
          * Print usage */
         printf(" Usage:\n\n"
-               "\t <mode>\n\n"
+               "\t%s <mode>\n\n"
                "\t <server_address>\n\n"
                "\t <port>\n\n"
                "\t <received_filename>\n\n"
                "\t <stats_filename>\n\n"
-               " This client will do as the hw instruction.\n\n");
+               " This client will do as the hw instruction.\n\n",argv[0]);
        return 1; /* failure */
     }
 
@@ -154,7 +154,7 @@ int main(int argc, char** argv)
         int char_rec;
         puts("character being recv");
 
-        while (char_rec = recvfrom(sd, buf, buflen, 0, NULL, NULL) > 0) {
+        while ((char_rec = recvfrom(sd, buf, buflen, 0, NULL, NULL)) > 0) {
         //puts("Got stuff from server");
             gettimeofday(&end, NULL);
             if (first_pkt!=1) {
@@ -167,14 +167,12 @@ int main(int argc, char** argv)
             }
            // buf[packet_size] = '\0';
             //n = fputs(buf, fp); //Write into file:
-            printf("is buf printing? %s\n",buf);
-            puts("*****************************************");
             count+=char_rec;
             fwrite(buf, 1, char_rec, fp);   
             bzero(buf, buflen);
             gettimeofday(&start, NULL);
         } 
-        printf("char_rec?? %i\n", char_rec);
+        
 
     }
     gettimeofday(&conn_end, NULL);
