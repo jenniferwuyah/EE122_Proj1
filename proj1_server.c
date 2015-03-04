@@ -154,12 +154,12 @@
 			}
  
 			/* delay */
-			if (packet_delay == 0) {
-				packet_delay= 0.000001; 
+			// if (packet_delay == 0) {
+			// 	packet_delay= 0.000001; 
+			// }
+			if (packet_delay>0) {
+				usleep((int)(packet_delay * 1000000));
 			}
-			//if (packet_delay>0) {
-				usleep(packet_delay * 1000000);
-			//}
 			packetno++;
 		}
 

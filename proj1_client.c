@@ -144,12 +144,13 @@ int main(int argc, char** argv)
         int char_rec;
         puts("character being recv");
         int packetno = 1;
+        int n;
         while ((char_rec = recvfrom(sd, buf, buflen, 0, NULL, NULL)) > 0) {
             gettimeofday(&end, NULL);
             if (first_pkt!=1) {
-                sec_delay = (float)(end.tv_sec - start.tv_sec) + ((float)end.tv_usec - (float)start.tv_usec)/1000000;
+                sec_delay = (float)(end.tv_sec - start.tv_sec) + (((float)end.tv_usec - (float)start.tv_usec)/1000000);
                 sprintf(time_str, "%f",sec_delay);
-                fputs(time_str, stat_fp); //Write into stat file
+                fwrite(time_str, 1, strlen(time_str), stat_fp); //Write into stat file
                 bzero(time_str, 100);
             } else {
                 first_pkt = 0;
