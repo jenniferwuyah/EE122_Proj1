@@ -9,6 +9,7 @@
 #include <sys/time.h>
 
 #define MAXLEN 4096
+#define TIMEOUT_SEC 30
 
 int main(int argc, char** argv)
 {
@@ -49,12 +50,12 @@ int main(int argc, char** argv)
     server_address = argv[2];
 
     if(port < 1024) {
-        fprintf(stderr, "[client4]\tError: Invalid port number <%d>.\n", port);
+        fprintf(stderr, "[client]\tError: Invalid port number <%d>.\n", port);
         fprintf(stderr, "\t\t(Only accepts ports over 1000)\n");
         return 1; /* failure */
     }
 
-    printf("Filename is: %s\n", filename);
+    //printf("Filename is: %s\n", filename);
 
     if (mode ==0) {
         sd = socket(AF_INET, SOCK_STREAM,0);
@@ -62,26 +63,37 @@ int main(int argc, char** argv)
         sd = socket(AF_INET, SOCK_DGRAM,0);
     } else {
         sd = socket(AF_INET, SOCK_DGRAM,IPPROTO_UDPLITE);
+        int optval=1;
+        setsockopt(sd, SOL_SOCKET, SO_NO_CHECK , (void*)&optval, sizeof(optval));
     }
     if (sd == -1) {
-        fprintf(stderr, "[client4]\tError: Can't create a socket.\n");
+        fprintf(stderr, "[client]\tError: Can't create a socket.\n");
         exit(1); 
     }
+
+    if (mode != 0) {
+        struct timeval timeout;      
+        timeout.tv_sec = TIMEOUT_SEC;
+        timeout.tv_usec = 0;
+
+        if (setsockopt (sd, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(timeout)) < 0)
+            error("setsockopt failed\n");
+    }
+
 
     bzero((char *)&server, sizeof(server));
     inet_pton(AF_INET, server_address, &(server.sin_addr));
     server.sin_port = htons(port);
     server.sin_family = AF_INET;
-    puts("just makde the socket");
     /* Connecting to the server */
 
     int first_pkt = 1; //For delay timing
     int count =0;
     int n =0;
-    puts("ready to begin");
+
     if (mode==0) {
         if (connect(sd, (struct sockaddr *)&server, sizeof(server)) == -1) {
-                printf("Couldn't connect to server");
+                printf("[client]\tError: Couldn't connect to server.\n");
                 close(sd);
                 exit(1);
         }
@@ -101,7 +113,7 @@ int main(int argc, char** argv)
 
         //ACK packet size. 
         if (write(sd, temp, strlen(temp)) == -1) {
-            printf("Couldn't send to the server");
+            printf("[client]\tError: Couldn't send to the server.\n");
             close(sd);
             exit(1);
         }
@@ -129,28 +141,27 @@ int main(int argc, char** argv)
         //Talk to server to begin. 
         gettimeofday(&conn_start, NULL);
     
-        puts("sending to server");
+        //puts("sending to server");
         if (sendto(sd, temp, strlen(temp) , 0, (struct sockaddr *) &server, sizeof(server)) == -1) {
-            fprintf(stderr, "[client4]\tError: Couldn't send to the server.");
+            fprintf(stderr, "[client4]\tError: Couldn't send to the server.\n");
             close(sd);
             exit(1);
         }
-        puts("just sent to server");
+        //puts("just sent to server");
         fp = fopen (filename, "w");
         stat_fp = fopen (stats_filename, "w");
 
         char buf[MAXLEN];
         buflen = MAXLEN;
         int char_rec;
-        puts("character being recv");
+        //puts("character being recv");
         int packetno = 1;
-        int n;
         while ((char_rec = recvfrom(sd, buf, buflen, 0, NULL, NULL)) > 0) {
             gettimeofday(&end, NULL);
             if (first_pkt!=1) {
                 sec_delay = (float)(end.tv_sec - start.tv_sec) + (((float)end.tv_usec - (float)start.tv_usec)/1000000);
                 sprintf(time_str, "%f",sec_delay);
-                fwrite(time_str, 1, strlen(time_str), stat_fp); //Write into stat file
+                fputs(time_str, stat_fp); //Write into stat file
                 bzero(time_str, 100);
             } else {
                 first_pkt = 0;

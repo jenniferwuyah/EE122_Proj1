@@ -54,13 +54,10 @@
 	 	listen_fd = socket(AF_INET, SOCK_DGRAM,0);
 	} else {
 	 	listen_fd = socket(AF_INET, SOCK_DGRAM,IPPROTO_UDPLITE);
+	 	int optval=1;
+		setsockopt(listen_fd, SOL_SOCKET, SO_NO_CHECK , (void*)&optval, sizeof(optval));
 	}
 
-	if (mode==2) {
-		int optval=1;
-		setsockopt(listen_fd, SOL_SOCKET, SO_NO_CHECK , (void*)&optval, sizeof(optval));
-		// setsockopt(listen_fd, SOL_SOCKET, SO_UDPCKSUM_IN);
-	}
 
 	if (listen_fd ==- 1) {
 	 	printf("[server]\tError: Couldn't make a socket.\n");
