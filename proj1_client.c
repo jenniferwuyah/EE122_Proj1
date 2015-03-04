@@ -10,11 +10,11 @@
 
 int main(int argc, char** argv)
 {
-    int sd, ret, listen_fd, comm_fdn, bytes_to_read, conless_send, buflen;
+    int sd, buflen;
     unsigned short port;
     unsigned int mode;
     char *filename, *stats_filename, *server_address;
-    struct sockaddr_in servaddr, placeholder;
+    struct sockaddr_in server;
     char time_str[100];
     struct timeval start, end, conn_start, conn_end;
     float sec_delay;
@@ -22,7 +22,6 @@ int main(int argc, char** argv)
     int packet_size;
 
     char *temp = "Initial";
-
 
     FILE * fp;
     FILE * stat_fp;
@@ -67,9 +66,9 @@ int main(int argc, char** argv)
         exit(1); 
     }
 
-    inet_pton(AF_INET, server_address, &(servaddr.sin_addr));
-    servaddr.sin_port = htons(port);
-    servaddr.sin_family = AF_INET;
+    inet_pton(AF_INET, server_address, &(server.sin_addr));
+    server.sin_port = htons(port);
+    server.sin_family = AF_INET;
     puts("just makde the socket");
     /* Connecting to the server */
 
@@ -78,7 +77,7 @@ int main(int argc, char** argv)
     int n =0;
     puts("ready to begin");
     if (mode==0) {
-        if (connect(sd, (struct sockaddr *)&servaddr, sizeof(servaddr)) == -1) {
+        if (connect(sd, (struct sockaddr *)&server, sizeof(server)) == -1) {
                 printf("Couldn't connect to server");
                 close(sd);
                 exit(1);
@@ -86,7 +85,7 @@ int main(int argc, char** argv)
 
         gettimeofday(&conn_start, NULL);
         
-        // printf("Connected: server's address is %s\n", inet_ntoa(servaddr.sin_addr));
+        // printf("Connected: server's address is %s\n", inet_ntoa(server.sin_addr));
         fp = fopen (filename, "w");
         stat_fp = fopen (stats_filename, "w");
 
@@ -112,7 +111,7 @@ int main(int argc, char** argv)
             if (first_pkt!=1) {
                 sec_delay = (float)(end.tv_sec - start.tv_sec) + ((float)end.tv_usec - (float)start.tv_usec)/1000000 ;
                 sprintf(time_str, "%f\n",sec_delay);
-                fputs(time_str, stat_fp); //Write into file:
+                fputs(time_str, stat_fp); //Write into stat file:
                 bzero(time_str, 100);
             } else {
                 first_pkt = 0;
@@ -128,7 +127,7 @@ int main(int argc, char** argv)
         gettimeofday(&conn_start, NULL);
     
         puts("sending to server");
-        if (sendto(sd, temp, strlen(temp) , 0, (struct sockaddr *) &servaddr, sizeof(servaddr)) == -1) {
+        if (sendto(sd, temp, strlen(temp) , 0, (struct sockaddr *) &server, sizeof(server)) == -1) {
             puts("Couldn't send to the server");
             close(sd);
             exit(1);
@@ -136,19 +135,7 @@ int main(int argc, char** argv)
         puts("just sent to server");
         fp = fopen (filename, "w");
         stat_fp = fopen (stats_filename, "w");
-/*
-        //getting packet size first
-        if (recvfrom(sd, str_buf, 20, 0, NULL, NULL) > 0) {
-            packet_size = atoi(str_buf);
-        }
 
-        //ACK packet size. 
-        if (sendto(sd, temp, strlen(temp) , 0, (struct sockaddr *) &servaddr, sizeof(servaddr)) == -1) {
-            printf("Couldn't send to the server");
-            close(sd);
-            exit(1);
-        }
-*/
         char buf[4096];
         buflen = 4096;
         int char_rec;
@@ -160,15 +147,13 @@ int main(int argc, char** argv)
             if (first_pkt!=1) {
                 sec_delay = (float)(end.tv_sec - start.tv_sec) + ((float)end.tv_usec - (float)start.tv_usec)/1000000 ;
                 sprintf(time_str, "%f\n",sec_delay);
-                fputs(time_str, stat_fp); //Write into file:
+                fputs(time_str, stat_fp); //Write into stat file:
                 bzero(time_str, 100);
             } else {
                 first_pkt = 0;
-            }
-           // buf[packet_size] = '\0';
-            //n = fputs(buf, fp); //Write into file:
+            } 
             count+=char_rec;
-            fwrite(buf, 1, char_rec, fp);   
+            fwrite(buf, 1, char_rec, fp);   //Write into file
             bzero(buf, buflen);
             gettimeofday(&start, NULL);
         } 

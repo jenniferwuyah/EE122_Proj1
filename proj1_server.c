@@ -14,15 +14,12 @@
 
  int main(int argc, char** argv)
  {
- 	int ret, listen_fd, comm_fd, client_len, port, char_read;
-	//unsigned short port;
+ 	int listen_fd, comm_fd, client_len, port, char_read, bytes_to_send;
  	unsigned int mode, packet_size;
  	double packet_delay;
  	char *filename;
- 	struct sockaddr_in servaddr, client;
- 	struct sockaddr client_test;
+ 	struct sockaddr_in server, client;
  	char buf[7]; //used for connectless recv to establish connection
- 	int bytes_to_send;
 
  	if(argc != 6 || !strcmp(argv[1], "-h"))
  	{
@@ -45,14 +42,10 @@
 	packet_size = atoi(argv[4]);
 	packet_delay = atof(argv[5]);
 
-	if(port < 1024)
-	{
-		fprintf(stderr, "Invalid port number: %d\n", port);
-	return 1; /* failure */
+	if(port < 1024) {
+		fprintf(stderr, "[server]\tError: Invalid port number <%d>.\n", port);
+		return 1; /* failure */
 	}
-
-	// printf("Filename is: %s\n", filename);
-	// printf("packet size %i\n", packet_size);
 
 	/*Server set up*/
 	if (mode==0) {
@@ -70,29 +63,29 @@
 	}
 
 	if (listen_fd ==- 1) {
-	 	printf("Couldn't make a socket");
+	 	printf("[server]\tError: Couldn't make a socket.\n");
 	 	exit(1);
 	}
 
 	/*Prepare server socket*/
-	servaddr.sin_family = AF_INET;
-	servaddr.sin_addr.s_addr = htons(INADDR_ANY);
-	servaddr.sin_port = htons(port);
+	server.sin_family = AF_INET;
+	server.sin_addr.s_addr = htons(INADDR_ANY);
+	server.sin_port = htons(port);
 
-	if (bind(listen_fd, (struct sockaddr*) &servaddr, sizeof(servaddr))==-1) {
-	 	printf("Socket binding fails\n");
+	if (bind(listen_fd, (struct sockaddr*) &server, sizeof(server))==-1) {
+	 	printf("[server]\tError: Socket binding fails.\n");
 	 	close(listen_fd);
 	 	exit(1);
 	 }
 
 	if (mode == 0) { //Only applies for connect ori
 		listen(listen_fd, MAX_NUM_CLIENTS);
-		printf("[server]\tlistening on port: %d\n", port);
+		printf("[server]\tlistening on port <%d>\n", port);
 	} 
 
 	char buffer[packet_size]; //For sending packets
 
-	printf("[server]\tWaiting for clients at port: %d\n", port);
+	printf("[server]\tWaiting for clients at port <%d>.\n", port);
 
 
 	while(1)
@@ -106,18 +99,13 @@
 		 	client.sin_family = AF_INET;
 		}
 		if (comm_fd==-1) {
-		 	printf("Error with accepting or recieving a client\n");
+		 	printf("[server]\tError: Cannot receive client.\n");
 		 	exit(1);
 		}
 
 		printf("\n[server]\tGot a new client!\n");
 
 		int file_handle = open(filename, O_RDONLY, S_IRUSR);
-		// printf("%d\n", client.sin_port);
-		// printf("client size? %d", sizeof(client));
-
-		// str_buf[strlen(str_buf)] = '\0';
-		// printf("buf length is %lu\n", strlen(str_buf));
 
 		//Say the packet size for connection oriented
 		if (mode==0) {	
@@ -130,7 +118,7 @@
 			str_buf[19]= '\0';
 			write(comm_fd, str_buf, strlen(str_buf));
 			if (read(comm_fd, buf, 7) ==-1) {
-				printf("ERROR GETTING ACK");
+				printf("[server4]\tError: Cannot get ACK\n");
 			}
 		} 
 
@@ -138,7 +126,6 @@
 			bzero(buffer, packet_size);
 
 			/* Read packet_size bytes from the file*/
-		 	// char_read = read(file_handle, buffer, packet_size-1);
 
 		 	char_read = read(file_handle, buffer, packet_size);
 
@@ -155,18 +142,12 @@
 			} else {
 				bytes_to_send = char_read;
 			}
-			// puts(buffer);
-			// puts("*****************************************");
 
 			if (mode==0) {				
 				write(comm_fd, buffer, bytes_to_send);
 			} else {
-				int send_suc;
-				send_suc = sendto(listen_fd, buffer, bytes_to_send, 0, (struct sockaddr *) &client, client_len);
-
-				if (send_suc < 0) {
-					printf("\n!!!!!!!!!!!!!!!!!!! NO BUENO!!!!!!!!!!!!!!!!!!!!!!\n");
-					perror("sendto");
+				if (sendto(listen_fd, buffer, bytes_to_send, 0, (struct sockaddr *) &client, client_len) != bytes_to_send) {
+					printf("[server]\tError: %s.\n", perror('sendto'));
 				}
 			}
  
