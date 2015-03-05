@@ -50,8 +50,8 @@ int main(int argc, char** argv)
     server_address = argv[2];
 
     if(port < 1024) {
-        fprintf(stderr, "[client]\tError: Invalid port number <%d>.\n", port);
-        fprintf(stderr, "\t\t(Only accepts ports over 1000)\n");
+        //fprintr(stderr, "[client]\tError: Invalid port number <%d>.\n", port);
+        //fprintf(stderr, "\t\t(Only accepts ports over 1000)\n");
         return 1; /* failure */
     }
 
@@ -62,10 +62,10 @@ int main(int argc, char** argv)
     } else if (mode == 1){
         sd = socket(AF_INET, SOCK_DGRAM,0);
     } else {
-        sd = socket(AF_INET, SOCK_DGRAM,IPPROTO_UDPLITE);
+        /*sd = socket(AF_INET, SOCK_DGRAM,IPPROTO_UDPLITE);
         int optval=1;
         setsockopt(sd, SOL_SOCKET, SO_NO_CHECK , (void*)&optval, sizeof(optval));
-    }
+   */ }
     if (sd == -1) {
         fprintf(stderr, "[client]\tError: Can't create a socket.\n");
         exit(1); 
@@ -76,8 +76,8 @@ int main(int argc, char** argv)
         timeout.tv_sec = TIMEOUT_SEC;
         timeout.tv_usec = 0;
 
-        if (setsockopt (sd, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(timeout)) < 0)
-            error("setsockopt failed\n");
+        if (setsockopt (sd, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(timeout)) < 0) { }
+            //error("setsockopt failed\n");
     }
 
 

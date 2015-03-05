@@ -53,9 +53,9 @@
 	} else if (mode == 1 ){ //connectionless sockets
 	 	listen_fd = socket(AF_INET, SOCK_DGRAM,0);
 	} else {
-	 	listen_fd = socket(AF_INET, SOCK_DGRAM,IPPROTO_UDPLITE);
+	 	/*listen_fd = socket(AF_INET, SOCK_DGRAM,IPPROTO_UDPLITE);
 	 	int optval=1;
-		setsockopt(listen_fd, SOL_SOCKET, SO_NO_CHECK , (void*)&optval, sizeof(optval));
+		setsockopt(listen_fd, SOL_SOCKET, SO_NO_CHECK , (void*)&optval, sizeof(optval));*/
 	}
 
 
