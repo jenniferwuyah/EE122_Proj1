@@ -79,8 +79,7 @@
 		printf("\n[server4]\tGot a new client!\n");
 
 
-		int p;
-		for (p = 0; p < 10; p++) { // send 10 packets total
+		while (1) { // send 10 packets total
 
 			//set packet delay to random double between 1 and 10
 			packet_delay = (rand() / (double)(RAND_MAX/10)) ;
@@ -91,6 +90,7 @@
 			}
  
 			/* delay */
+			printf("delay for %f sec\n", packet_delay);	
 			if (packet_delay > 0) {		
 				//printf("delay for %f sec\n", packet_delay);	
 				usleep((int)(packet_delay * 1000000));
