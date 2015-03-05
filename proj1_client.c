@@ -24,6 +24,13 @@ int main(int argc, char** argv)
     char str_buf[20]; //Assume largest packet is only 20 digits
     int packet_size;
 
+    memset(&server, 0, sizeof(struct sockaddr_in));
+
+    memset(&start, 0, sizeof(struct timeval));
+    memset(&end, 0, sizeof(struct timeval));
+    memset(&conn_start, 0, sizeof(struct timeval));
+    memset(&conn_end, 0, sizeof(struct timeval));
+
     char *temp = "Initial";
 
     FILE * fp;
@@ -72,7 +79,8 @@ int main(int argc, char** argv)
     }
 
     if (mode != 0) {
-        struct timeval timeout;      
+        struct timeval timeout;  
+        memset(&timeout, 0, sizeof(struct timeval));   
         timeout.tv_sec = TIMEOUT_SEC;
         timeout.tv_usec = 0;
 
