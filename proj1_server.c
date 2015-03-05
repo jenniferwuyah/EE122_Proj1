@@ -20,6 +20,10 @@
  	char *filename;
  	struct sockaddr_in server, client;
  	char buf[7]; //used for connectless recv to establish connection
+	
+	memset(&server, 0, sizeof(struct sockaddr_in));
+
+
 
  	if(argc != 6 || !strcmp(argv[1], "-h"))
  	{
