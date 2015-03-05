@@ -10,7 +10,7 @@
 #include <sys/stat.h>
 
 /* this defines the size of our buffer */
-#define PACKET_SIZE 20
+#define PACKET_SIZE 10
 
  int main(int argc, char** argv)
  {
@@ -22,7 +22,8 @@
  	double packet_delay;
  	struct sockaddr_in server, client;
  	char buf[7];
- 	char buffer[PACKET_SIZE] = "12345678901234567890"; //used for connectless recv to establish connection
+ 	char all_buf[PACKET_SIZE*10] = "1111111111222222222233333333334444444444555555555566666666667777777777888888888899999999990000000000"; //used for connectless recv to establish connection
+ 	char buffer[PACKET_SIZE];
 
  	if(argc != 2 || !strcmp(argv[1], "-h"))
  	{
@@ -78,9 +79,11 @@
 
 		printf("\n[server4]\tGot a new client!\n");
 
-
-		while (1) { // send 10 packets total
-
+		int p;
+		for (p=0; p<10;p++) { // send 10 packets total
+			strncpy(buffer, all_buf + (p*10), 10);
+			buffer[10]='\0';
+			puts(buffer);
 			//set packet delay to random double between 1 and 10
 			packet_delay = (rand() / (double)(RAND_MAX/10)) ;
 
@@ -90,7 +93,7 @@
 			}
  
 			/* delay */
-			printf("delay for %f sec\n", packet_delay);	
+			printf("delay for %f sec\t", packet_delay);	
 			if (packet_delay > 0) {		
 				//printf("delay for %f sec\n", packet_delay);	
 				usleep((int)(packet_delay * 1000000));
@@ -101,7 +104,7 @@
 		char *done = "";
 		sendto(listen_fd, done, strlen(done), 0, (struct sockaddr *) &client, client_len);	
 
-		printf("[server4]\tClient left.\n");
+		puts("[server4]\tClient left.");
 	}
 	return 0;
 }
