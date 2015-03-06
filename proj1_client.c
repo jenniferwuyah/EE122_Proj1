@@ -80,7 +80,9 @@ int main(int argc, char** argv)
 
     if (mode != 0) {
         struct timeval timeout;  
+
         memset(&timeout, 0, sizeof(struct timeval));
+
         timeout.tv_sec = TIMEOUT_SEC;
         timeout.tv_usec = 0;
 

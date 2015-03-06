@@ -36,7 +36,13 @@ int main(int argc, char** argv)
     /* Parse args */
     port = atoi(argv[2]);
     server_address = argv[1];
-    bFlag = argc - 3;
+    if (argc==4) {
+	if (strcmp(argv[3],"-b")!=0) {
+		bFlag = 0;
+	} else {
+		bFlag = 1;
+	}	
+    }    
     printf("bFlag: %i\n", bFlag);
 
     if(port < 1024) {
@@ -75,29 +81,65 @@ int main(int argc, char** argv)
     buflen = 4096;
     int char_rec;
 
-    while ((char_rec = recvfrom(sd, buf, buflen, 0, NULL, NULL)) > 0) {
+    if (bFlag == 0) {
+	    while ((char_rec = recvfrom(sd, buf, buflen, 0, NULL, NULL)) > 0) {
+    		printf("* %s", buf);
+            //puts(buf);
+    		gettimeofday(&end, NULL);
+    		if (first_pkt!=1) {
+    		    sec_delay = (float)(end.tv_sec - start.tv_sec) + ((float)end.tv_usec - (float)start.tv_usec)/1000000 ;
+    			//printf("%f\n",sec_delay);
+    		} else {
+    		    first_pkt = 0;
+    		}
+            printf("\tdelay: %f\n", sec_delay);
+    		count+=char_rec;
+    	  
+    		bzero(buf, buflen);
+    		gettimeofday(&start, NULL);
+	    } 
+    } else {
+	    char client_buf[4096];
+	    client_buf[0]= '\0';
+    	while(1) {
+    		
+    		if (strlen(client_buf)==0) {
+    			if ((char_rec = recvfrom(sd, buf, buflen, 0, NULL, NULL)) > 0) {
+    				printf("\n* %s", buf);
+                    gettimeofday(&end, NULL);
 
-        gettimeofday(&end, NULL);
-        if (first_pkt!=1) {
-            sec_delay = (float)(end.tv_sec - start.tv_sec) + ((float)end.tv_usec - (float)start.tv_usec)/1000000 ;
-            printf("%f\n",sec_delay);
-        } else {
-            first_pkt = 0;
-        }
+    				//Received the first 10 bytes
+    				memcpy(client_buf, &buf[10], char_rec-10);
+    				client_buf[char_rec-10] = '\0'; //Null term			
+    			} else {
+    				puts("\nEnd");
+                    gettimeofday(&end, NULL);
+                    break;
+    			}
+    		} else {
+    			puts("**");
+                puts(client_buf);
+                gettimeofday(&end, NULL);
+    				//Still want the null terminator
+    			memmove(client_buf, &client_buf[10], strlen(client_buf)-10+1);
+    		}
 
-        count+=char_rec;
-        puts(buf); // print out the recieved package
-  
-        bzero(buf, buflen);
-        gettimeofday(&start, NULL);
-    } 
+            if (first_pkt!=1) {
+                sec_delay = (float)(end.tv_sec - start.tv_sec) + ((float)end.tv_usec - (float)start.tv_usec)/1000000 ;
+                printf("\tdelay: %f",sec_delay);
+            } else {
+                first_pkt = 0;
+            }
+            gettimeofday(&start, NULL);
+            usleep((int)5*1000000);
 
+    	}
+    }
 
     gettimeofday(&conn_end, NULL);
     sec_delay = (float)(conn_end.tv_sec - conn_start.tv_sec) + ((float)conn_end.tv_usec - (float)conn_start.tv_usec)/1000000 ;
     fprintf(stderr, "[client4]\t Connection lasted %f seconds.\n", sec_delay);
     fprintf(stderr, "[client4]\t Received a file of size %i bytes.\n",count );
-
     close(sd);
     return 0;
 }
