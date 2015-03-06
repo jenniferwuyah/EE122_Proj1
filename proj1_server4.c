@@ -84,7 +84,7 @@
 		while (1) { // send 10 packets total
 			//strncpy(buffer, all_buf + (p*10), 10);
 			//buffer[10]='\0';
-			puts(all_buf);
+			//puts(all_buf);
 			//set packet delay to random double between 1 and 10
 			packet_delay = (rand() / (double)(RAND_MAX/10)) ;
 
@@ -94,7 +94,7 @@
 			}
  
 			/* delay */
-			printf("delay for %f sec\t", packet_delay);	
+			printf("[server4]\tdelay for %f sec\n", packet_delay);	
 			if (packet_delay > 0) {		
 				//printf("delay for %f sec\n", packet_delay);	
 				usleep((int)(packet_delay * 1000000));

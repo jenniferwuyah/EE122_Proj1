@@ -83,16 +83,15 @@ int main(int argc, char** argv)
 
     if (bFlag == 0) {
 	    while ((char_rec = recvfrom(sd, buf, buflen, 0, NULL, NULL)) > 0) {
-    		printf("* %s", buf);
-            //puts(buf);
+    		//printf("* %s\n", buf);
+                puts("[client]\t Received");
     		gettimeofday(&end, NULL);
-    		if (first_pkt!=1) {
+    		/*if (first_pkt!=1) {
     		    sec_delay = (float)(end.tv_sec - start.tv_sec) + ((float)end.tv_usec - (float)start.tv_usec)/1000000 ;
-    			//printf("%f\n",sec_delay);
+    			printf("delay is %f\n",sec_delay);
     		} else {
     		    first_pkt = 0;
-    		}
-            // printf("\tdelay: %f\n", sec_delay);
+    		}*/
     		count+=char_rec;
     	  
     		bzero(buf, buflen);
@@ -105,7 +104,8 @@ int main(int argc, char** argv)
     		
     		if (strlen(client_buf)==0) {
     			if ((char_rec = recvfrom(sd, buf, buflen, 0, NULL, NULL)) > 0) {
-    				printf("\n* %s", buf);
+    				//printf("\n* %s", buf);
+                    puts("[client]\t Received");
                     gettimeofday(&end, NULL);
 
     				//Received the first 10 bytes
@@ -117,7 +117,7 @@ int main(int argc, char** argv)
                     break;
     			}
     		} else {
-    			puts("**");
+		puts("**");
                 puts(client_buf);
                 gettimeofday(&end, NULL);
     				//Still want the null terminator
