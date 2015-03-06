@@ -92,7 +92,7 @@ int main(int argc, char** argv)
     		} else {
     		    first_pkt = 0;
     		}
-            printf("\tdelay: %f\n", sec_delay);
+            // printf("\tdelay: %f\n", sec_delay);
     		count+=char_rec;
     	  
     		bzero(buf, buflen);

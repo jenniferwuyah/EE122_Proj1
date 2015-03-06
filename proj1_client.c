@@ -57,22 +57,19 @@ int main(int argc, char** argv)
     server_address = argv[2];
 
     if(port < 1024) {
-        //fprintr(stderr, "[client]\tError: Invalid port number <%d>.\n", port);
-        //fprintf(stderr, "\t\t(Only accepts ports over 1000)\n");
         return 1; /* failure */
     }
 
-    //printf("Filename is: %s\n", filename);
 
     if (mode ==0) {
         sd = socket(AF_INET, SOCK_STREAM,0);
     } else if (mode == 1){
         sd = socket(AF_INET, SOCK_DGRAM,0);
     } else {
-        /*sd = socket(AF_INET, SOCK_DGRAM,IPPROTO_UDPLITE);
+        sd = socket(AF_INET, SOCK_DGRAM,IPPROTO_UDPLITE);
         int optval=1;
         setsockopt(sd, SOL_SOCKET, SO_NO_CHECK , (void*)&optval, sizeof(optval));
-   */ }
+   }
     if (sd == -1) {
         fprintf(stderr, "[client]\tError: Can't create a socket.\n");
         exit(1); 
@@ -87,7 +84,6 @@ int main(int argc, char** argv)
         timeout.tv_usec = 0;
 
         if (setsockopt (sd, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(timeout)) < 0) { }
-            //error("setsockopt failed\n");
     }
 
 
@@ -112,15 +108,12 @@ int main(int argc, char** argv)
 
         gettimeofday(&conn_start, NULL);
         
-        // printf("Connected: server's address is %s\n", inet_ntoa(server.sin_addr));
         fp = fopen (filename, "w");
         stat_fp = fopen (stats_filename, "w");
 
         //getting packet size first
         if (read(sd, str_buf, 20) > 0) {
-            // printf("client got %s\n", str_buf);
             packet_size = atoi(str_buf);
-            // printf("packet size is %i\n", packet_size);
         }
 
         //ACK packet size. 
@@ -153,20 +146,17 @@ int main(int argc, char** argv)
         //Talk to server to begin. 
         gettimeofday(&conn_start, NULL);
     
-        //puts("sending to server");
         if (sendto(sd, temp, strlen(temp) , 0, (struct sockaddr *) &server, sizeof(server)) == -1) {
             fprintf(stderr, "[client4]\tError: Couldn't send to the server.\n");
             close(sd);
             exit(1);
         }
-        //puts("just sent to server");
         fp = fopen (filename, "w");
         stat_fp = fopen (stats_filename, "w");
 
         char buf[MAXLEN];
         buflen = MAXLEN;
         int char_rec;
-        //puts("character being recv");
         int packetno = 1;
         while ((char_rec = recvfrom(sd, buf, buflen, 0, NULL, NULL)) > 0) {
             gettimeofday(&end, NULL);

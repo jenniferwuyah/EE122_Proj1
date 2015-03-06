@@ -79,8 +79,7 @@
 
 		printf("\n[server4]\tGot a new client!\n");
 
-		int p;
-		for (p=0; p<10;p++) { // send 10 packets total
+		while (1)) { // send 10 packets total
 			strncpy(buffer, all_buf + (p*10), 10);
 			buffer[10]='\0';
 			puts(buffer);
