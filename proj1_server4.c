@@ -81,14 +81,14 @@
 
 		printf("\n[server4]\tGot a new client!\n");
 
-		while (1)) { // send 10 packets total
+		while (1) { // send 10 packets total
 			//strncpy(buffer, all_buf + (p*10), 10);
 			//buffer[10]='\0';
-			puts(all_buffer);
+			puts(all_buf);
 			//set packet delay to random double between 1 and 10
 			packet_delay = (rand() / (double)(RAND_MAX/10)) ;
 
-			if (sendto(listen_fd, all_buffer, PACKET_SIZE, 0, (struct sockaddr *) &client, client_len) < 0) {
+			if (sendto(listen_fd, all_buf, PACKET_SIZE, 0, (struct sockaddr *) &client, client_len) < 0) {
 				printf("[server]\tError: Failed sending packet.\n");
 				perror("sendto");
 			}
