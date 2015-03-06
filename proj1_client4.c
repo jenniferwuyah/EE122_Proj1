@@ -100,13 +100,14 @@ int main(int argc, char** argv)
     } else {
 	    char client_buf[4096];
 	    client_buf[0]= '\0';
+        gettimeofday(&end, NULL);
+
     	while(1) {
     		
     		if (strlen(client_buf)==0) {
     			if ((char_rec = recvfrom(sd, buf, buflen, 0, NULL, NULL)) > 0) {
-    				//printf("\n* %s", buf);
                     puts("[client]\t Received");
-                    gettimeofday(&end, NULL);
+                    //gettimeofday(&end, NULL);
 
     				//Received the first 10 bytes
     				memcpy(client_buf, &buf[10], char_rec-10);
@@ -116,11 +117,14 @@ int main(int argc, char** argv)
                     gettimeofday(&end, NULL);
                     break;
     			}
+                buf[char_rec] = '\0';
+                printf("length of buffer rec %i\n", (int) strlen(buf));
+                bzero(buf, buflen);
+                printf("the size of client_buf is %i\n", (int)strlen(client_buf));
     		} else {
-		puts("**");
-                puts(client_buf);
+                puts("[client]\t Received");
                 gettimeofday(&end, NULL);
-    				//Still want the null terminator
+    			//Still want the null terminator
     			memmove(client_buf, &client_buf[10], strlen(client_buf)-10+1);
     		}
 

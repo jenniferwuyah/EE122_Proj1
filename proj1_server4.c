@@ -88,6 +88,11 @@
 			//set packet delay to random double between 1 and 10
 			packet_delay = (rand() / (double)(RAND_MAX/10)) ;
 
+			if (packet_delay > 0) {		
+				//printf("delay for %f sec\n", packet_delay);	
+				usleep((int)(packet_delay * 1000000));
+			}
+
 			if (sendto(listen_fd, all_buf, PACKET_SIZE, 0, (struct sockaddr *) &client, client_len) < 0) {
 				printf("[server]\tError: Failed sending packet.\n");
 				perror("sendto");
@@ -95,10 +100,7 @@
  
 			/* delay */
 			printf("[server4]\tdelay for %f sec\n", packet_delay);	
-			if (packet_delay > 0) {		
-				//printf("delay for %f sec\n", packet_delay);	
-				usleep((int)(packet_delay * 1000000));
-			}
+			
 		}
 
 		/*Send last empty packet for connectless to finish*/
