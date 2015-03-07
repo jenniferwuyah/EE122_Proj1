@@ -43,7 +43,6 @@ int main(int argc, char** argv)
 		bFlag = 1;
 	}	
     }    
-    printf("bFlag: %i\n", bFlag);
 
     if(port < 1024) {
         fprintf(stderr, "[client4]\tError: Invalid port number <%d>.\n", port);
@@ -69,7 +68,6 @@ int main(int argc, char** argv)
     int n =0;
 
     //Talk to server to begin. 
-    gettimeofday(&conn_start, NULL);
 
     if (sendto(sd, temp, strlen(temp) , 0, (struct sockaddr *) &server, sizeof(server)) == -1) {
         fprintf(stderr, "[client4]\tError: Couldn't send to the server.");
@@ -83,30 +81,21 @@ int main(int argc, char** argv)
 
     if (bFlag == 0) {
 	    while ((char_rec = recvfrom(sd, buf, buflen, 0, NULL, NULL)) > 0) {
-    		//printf("* %s\n", buf);
                 puts("[client]\t Received");
-    		gettimeofday(&end, NULL);
-    		/*if (first_pkt!=1) {
-    		    sec_delay = (float)(end.tv_sec - start.tv_sec) + ((float)end.tv_usec - (float)start.tv_usec)/1000000 ;
-    			printf("delay is %f\n",sec_delay);
-    		} else {
-    		    first_pkt = 0;
-    		}*/
     		count+=char_rec;
     	  
     		bzero(buf, buflen);
-    		gettimeofday(&start, NULL);
 	    } 
     } else {
 	    char client_buf[4096];
 	    client_buf[0]= '\0';
-        gettimeofday(&end, NULL);
+            gettimeofday(&end, NULL);
 
     	while(1) {
     		
     		if (strlen(client_buf)==0) {
     			if ((char_rec = recvfrom(sd, buf, buflen, 0, NULL, NULL)) > 0) {
-                    puts("[client]\t Received");
+                    		puts("[client]\t Received");
                     //gettimeofday(&end, NULL);
 
     				//Received the first 10 bytes
@@ -114,36 +103,17 @@ int main(int argc, char** argv)
     				client_buf[char_rec-10] = '\0'; //Null term			
     			} else {
     				puts("\nEnd");
-                    gettimeofday(&end, NULL);
-                    break;
+                    		break;
     			}
-                buf[char_rec] = '\0';
-                printf("length of buffer rec %i\n", (int) strlen(buf));
-                bzero(buf, buflen);
-                printf("the size of client_buf is %i\n", (int)strlen(client_buf));
+                	bzero(buf, buflen);
     		} else {
-                puts("[client]\t Received");
-                gettimeofday(&end, NULL);
+                	puts("[client]\t Received");
     			//Still want the null terminator
     			memmove(client_buf, &client_buf[10], strlen(client_buf)-10+1);
     		}
-
-            if (first_pkt!=1) {
-                sec_delay = (float)(end.tv_sec - start.tv_sec) + ((float)end.tv_usec - (float)start.tv_usec)/1000000 ;
-                printf("\tdelay: %f",sec_delay);
-            } else {
-                first_pkt = 0;
-            }
-            gettimeofday(&start, NULL);
             usleep((int)5*1000000);
-
     	}
     }
-
-    gettimeofday(&conn_end, NULL);
-    sec_delay = (float)(conn_end.tv_sec - conn_start.tv_sec) + ((float)conn_end.tv_usec - (float)conn_start.tv_usec)/1000000 ;
-    fprintf(stderr, "[client4]\t Connection lasted %f seconds.\n", sec_delay);
-    fprintf(stderr, "[client4]\t Received a file of size %i bytes.\n",count );
     close(sd);
     return 0;
 }
